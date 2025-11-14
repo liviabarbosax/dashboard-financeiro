@@ -1,343 +1,534 @@
 <!doctype html>
 <html lang="pt-BR" class="h-full">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard Financeiro Avançado</title>
-  
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="/_sdk/element_sdk.js"></script>
-  <script src="/_sdk/data_sdk.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
-  
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Financeiro Avançado</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/_sdk/element_sdk.js"></script>
+    <script src="/_sdk/data_sdk.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="estilo.css">
+    
+    <style>@view-transition { navigation: auto; }</style>
 </head>
-
 <body class="h-full bg-slate-800 text-white dark">
-  
-  <div id="login-screen" class="login-container flex items-center justify-center">
-    <div class="login-card p-8 rounded-2xl shadow-2xl w-full max-w-md mx-4">
-      <div class="text-center mb-8">
-        <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
-          <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-        </div>
-        <h1 class="text-2xl font-bold text-white mb-2">Dashboard Financeiro</h1>
-        <p class="text-white/80">Digite sua senha para acessar</p>
-      </div>
-      <form id="login-form">
-        <div class="mb-6"><label for="password" class="block text-white/90 text-sm font-medium mb-2">Senha de Acesso</label> <input type="password" id="password" name="password" required class="w-full p-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/60 focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/20" placeholder="Digite sua senha"></div>
-        <button type="submit" id="login-btn" class="w-full bg-white/20 hover:bg-white/30 text-white py-3 px-4 rounded-lg font-medium transition-all duration-200 flex items-center justify-center"> <span id="login-text">Entrar</span> <span id="login-loading" class="hidden"><svg class="loading-spinner w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg></span> </button>
-        <div class="mt-4 text-center">
-          <p class="text-white/60 text-sm">Senha padrão: <code class="bg-white/10 px-2 py-1 rounded">admin123</code></p>
-        </div>
-      </form>
-    </div>
-  </div>
+  <div id="login-screen" class="login-screen flex items-center justify-center min-h-screen bg-gray-900 hidden">
+    <form id="login-form" class="p-8 bg-gray-800 rounded-lg shadow-xl w-full max-w-sm">
+        <h2 class="text-3xl font-bold text-white mb-6 text-center">Login</h2>
 
-  <div id="main-app" class="flex h-full hidden">
-    <div class="w-64 bg-slate-900 dark:bg-slate-900 light:bg-white light:text-slate-800 shadow-xl flex flex-col">
-      <div class="p-6 border-b border-slate-700 dark:border-slate-700 light:border-slate-200">
-        <h1 id="app-title" class="text-xl font-bold text-blue-400">Dashboard Financeiro</h1>
-      </div>
-      <div class="p-4 border-b border-slate-700 dark:border-slate-700 light:border-slate-200">
-        <div class="flex items-center justify-between"><span class="text-sm text-slate-300 dark:text-slate-300 light:text-slate-600">Tema</span>
-          <div class="theme-toggle" id="theme-toggle">
-            <div class="theme-toggle-slider">
-              <svg id="theme-icon" class="w-4 h-4 text-slate-600" fill="currentColor" viewbox="0 0 20 20"><path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"></path></svg>
+        <div class="mb-4">
+            <label for="login-email" class="block text-sm font-medium text-gray-300 mb-1">Email</label>
+            <input type="email" id="login-email" name="email" required
+                class="w-full px-4 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="seu.email@dominio.com" value="domunistore@example.com"> 
             </div>
-          </div>
+
+        <div class="mb-6">
+            <label for="login-password" class="block text-sm font-medium text-gray-300 mb-1">Senha</label>
+            <input type="password" id="login-password" name="password" required
+                class="w-full px-4 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="Sua senha">
         </div>
-      </div>
-      <nav class="flex-1 p-4">
-        <ul class="space-y-2">
-          <li><a href="#" class="sidebar-item flex items-center p-3 rounded-lg text-slate-300 dark:text-slate-300 light:text-slate-600 hover:text-white active" id="nav-dashboard">
-            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v6H8V5z"></path></svg> Dashboard </a></li>
-          <li><a href="#" class="sidebar-item flex items-center p-3 rounded-lg text-slate-300 dark:text-slate-300 light:text-slate-600 hover:text-white" id="nav-pedidos">
-            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg> Pedidos </a></li>
-          <li><a href="#" class="sidebar-item flex items-center p-3 rounded-lg text-slate-300 dark:text-slate-300 light:text-slate-600 hover:text-white" id="nav-resumo">
-            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg> Resumo </a></li>
-          <li><a href="#" class="sidebar-item flex items-center p-3 rounded-lg text-slate-300 dark:text-slate-300 light:text-slate-600 hover:text-white" id="nav-fechamento">
-            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3a2 2 0 012-2h4a2 2 0 012 2v4m-6 0V6a2 2 0 012-2h4a2 2 0 012 2v1M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V9a2 2 0 00-2-2h-2"></path></svg> Fechamento </a></li>
-        </ul>
-      </nav>
-      <div class="p-4 border-t border-slate-700 dark:border-slate-700 light:border-slate-200"><button id="logout-btn" class="w-full flex items-center justify-center p-3 text-slate-300 dark:text-slate-300 light:text-slate-600 hover:text-red-400 transition-colors">
-        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg> Sair </button>
-      </div>
+
+        <button type="submit" id="login-btn"
+            class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 rounded-lg transition duration-200">
+            Entrar
+        </button>
+
+        <p id="login-message" class="text-red-400 text-sm mt-4 text-center hidden"></p>
+    </form>
+</div>
     </div>
     
-    <div class="flex-1 flex flex-col">
-      <header class="bg-slate-900 dark:bg-slate-900 light:bg-white light:text-slate-800 shadow-lg p-4 border-b border-slate-700 dark:border-slate-700 light:border-slate-200">
-        <div class="flex justify-between items-center">
-          <div>
-            <h2 id="page-title" class="text-2xl font-semibold text-white dark:text-white light:text-slate-800">Dashboard</h2>
-            <p id="current-month" class="text-slate-400 dark:text-slate-400 light:text-slate-600 mt-1">Janeiro 2024</p>
-          </div>
-          <div class="text-right">
-            <p class="text-sm text-slate-400 dark:text-slate-400 light:text-slate-600">Total de Caixa</p>
-            <p id="total-cash" class="text-2xl font-bold text-green-400">R$ 15.750,00</p>
-          </div>
+    <div id="main-app" class="flex h-full hidden">
+        <div class="w-64 bg-slate-900 dark:bg-slate-900 light:bg-white light:text-slate-800 shadow-xl flex flex-col">
+            <div class="p-6 border-b border-slate-700 dark:border-slate-700 light:border-slate-200">
+                <h1 id="app-title" class="text-xl font-bold text-blue-400">Dashboard Financeiro</h1>
+            </div>
+            <div class="p-4 border-b border-slate-700 dark:border-slate-700 light:border-slate-200">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-slate-300 dark:text-slate-300 light:text-slate-600">Tema</span>
+                    <div class="theme-toggle" id="theme-toggle">
+                        <div class="theme-toggle-slider">
+                            <svg id="theme-icon" class="w-4 h-4 text-slate-600" fill="currentColor" viewbox="0 0 20 20"><path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"></path></svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <nav class="flex-1 p-4">
+                <ul class="space-y-2">
+                    <li><a href="#" class="sidebar-item flex items-center p-3 rounded-lg text-slate-300 dark:text-slate-300 light:text-slate-600 hover:text-white active" id="nav-dashboard">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v6H8V5z"></path></svg> Dashboard </a></li>
+                    <li><a href="#" class="sidebar-item flex items-center p-3 rounded-lg text-slate-300 dark:text-slate-300 light:text-slate-600 hover:text-white" id="nav-pedidos">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg> Pedidos </a></li>
+                    <li><a href="#" class="sidebar-item flex items-center p-3 rounded-lg text-slate-300 dark:text-slate-300 light:text-slate-600 hover:text-white" id="nav-resumo">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg> Resumo </a></li>
+                    <li><a href="#" class="sidebar-item flex items-center p-3 rounded-lg text-slate-300 dark:text-slate-300 light:text-slate-600 hover:text-white" id="nav-fechamento">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3a2 2 0 012-2h4a2 2 0 012 2v4m-6 0V6a2 2 0 012-2h4a2 2 0 012 2v1M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V9a2 2 0 00-2-2h-2"></path></svg> Fechamento </a></li>
+                </ul>
+            </nav>
+            <div class="p-4 border-t border-slate-700 dark:border-slate-700 light:border-slate-200">
+                <button id="logout-btn" class="w-full flex items-center justify-center p-3 text-slate-300 dark:text-slate-300 light:text-slate-600 hover:text-red-400 transition-colors">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg> Sair 
+                </button>
+            </div>
         </div>
-      </header>
-      
-      <main class="flex-1 p-6 overflow-auto bg-slate-800 dark:bg-slate-800 light:bg-slate-50">
-        <div id="dashboard-page" class="page-content">
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-            <div class="kpi-card bg-gradient-to-br from-green-600 to-green-700 p-6 rounded-2xl shadow-lg border border-green-500/20">
-              <div class="flex items-center justify-between">
-                <div>
-                  <p class="text-green-100 text-sm font-medium">💰 Lucro Total</p>
-                  <p id="kpi-lucro-total" class="text-3xl font-bold text-white mt-2">R$ 0,00</p>
-                  <p id="kpi-lucro-variacao" class="text-green-200 text-xs mt-1">+0% vs mês anterior</p>
+        <div class="flex-1 flex flex-col">
+            <header class="bg-slate-900 dark:bg-slate-900 light:bg-white light:text-slate-800 shadow-lg p-4 border-b border-slate-700 dark:border-slate-700 light:border-slate-200">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h2 id="page-title" class="text-2xl font-semibold text-white dark:text-white light:text-slate-800">Dashboard</h2>
+                        <p id="current-month" class="text-slate-400 dark:text-slate-400 light:text-slate-600 mt-1">Janeiro 2024</p>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <button id="firebase-sync-btn" class="hidden bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg> Sincronizar 
+                        </button> 
+                        <div id="connectivity-status" class="flex items-center">
+                            <div id="status-indicator" class="w-3 h-3 bg-gray-400 rounded-full mr-2"></div>
+                            <span id="status-text" class="text-sm text-slate-400 dark:text-slate-400 light:text-slate-600">Offline</span>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm text-slate-400 dark:text-slate-400 light:text-slate-600">Total de Caixa</p>
+                            <p id="total-cash" class="text-2xl font-bold text-green-400">R$ 15.750,00</p>
+                        </div>
+                    </div>
                 </div>
-                <div class="bg-white/20 p-3 rounded-full"><svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path></svg></div>
-              </div>
-            </div>
-            <div class="kpi-card bg-gradient-to-br from-blue-600 to-blue-700 p-6 rounded-2xl shadow-lg border border-blue-500/20">
-              <div class="flex items-center justify-between">
-                <div>
-                  <p class="text-blue-100 text-sm font-medium">🛒 Total Vendas</p>
-                  <p id="kpi-total-vendas" class="text-3xl font-bold text-white mt-2">R$ 0,00</p>
-                  <p id="kpi-vendas-variacao" class="text-blue-200 text-xs mt-1">+0% vs mês anterior</p>
+            </header>
+            <main class="flex-1 p-6 overflow-auto bg-slate-800 dark:bg-slate-800 light:bg-slate-50">
+                <div id="dashboard-page" class="page-content">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+                        <div class="kpi-card bg-gradient-to-br from-green-600 to-green-700 p-6 rounded-2xl shadow-lg border border-green-500/20">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-green-100 text-sm font-medium">💰 Lucro Total</p>
+                                    <p id="kpi-lucro-total" class="text-3xl font-bold text-white mt-2">R$ 0,00</p>
+                                    <p id="kpi-lucro-variacao" class="text-green-200 text-xs mt-1">+0% vs mês anterior</p>
+                                </div>
+                                <div class="bg-white/20 p-3 rounded-full">
+                                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path></svg>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="kpi-card bg-gradient-to-br from-blue-600 to-blue-700 p-6 rounded-2xl shadow-lg border border-blue-500/20">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-blue-100 text-sm font-medium">🛒 Total Vendas</p>
+                                    <p id="kpi-total-vendas" class="text-3xl font-bold text-white mt-2">R$ 0,00</p>
+                                    <p id="kpi-vendas-variacao" class="text-blue-200 text-xs mt-1">+0% vs mês anterior</p>
+                                </div>
+                                <div class="bg-white/20 p-3 rounded-full">
+                                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="kpi-card bg-gradient-to-br from-purple-600 to-purple-700 p-6 rounded-2xl shadow-lg border border-purple-500/20">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-purple-100 text-sm font-medium">📦 Total Pedidos</p>
+                                    <p id="kpi-total-pedidos" class="text-3xl font-bold text-white mt-2">0</p>
+                                    <p id="kpi-pedidos-variacao" class="text-purple-200 text-xs mt-1">+0% vs mês anterior</p>
+                                </div>
+                                <div class="bg-white/20 p-3 rounded-full">
+                                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="kpi-card bg-gradient-to-br from-orange-600 to-orange-700 p-6 rounded-2xl shadow-lg border border-orange-500/20">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-orange-100 text-sm font-medium">📈 Ticket Médio</p>
+                                    <p id="kpi-ticket-medio" class="text-3xl font-bold text-white mt-2">R$ 0,00</p>
+                                    <p id="kpi-ticket-variacao" class="text-orange-200 text-xs mt-1">+0% vs mês anterior</p>
+                                </div>
+                                <div class="bg-white/20 p-3 rounded-full">
+                                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="kpi-card bg-gradient-to-br from-teal-600 to-teal-700 p-6 rounded-2xl shadow-lg border border-teal-500/20">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-teal-100 text-sm font-medium">📊 Margem Lucro</p>
+                                    <p id="kpi-margem-lucro" class="text-3xl font-bold text-white mt-2">0%</p>
+                                    <p id="kpi-margem-variacao" class="text-teal-200 text-xs mt-1">+0% vs mês anterior</p>
+                                </div>
+                                <div class="bg-white/20 p-3 rounded-full">
+                                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card p-6 rounded-2xl mb-8 border border-slate-600/50">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-xl font-semibold text-white dark:text-white light:text-slate-800">🎯 Painel de Metas</h3>
+                            <button id="edit-meta-btn" class="text-blue-400 hover:text-blue-300 text-sm font-medium"> Editar Meta </button>
+                        </div>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div class="bg-slate-700/50 dark:bg-slate-700/50 light:bg-slate-100 p-6 rounded-xl">
+                                <div class="flex justify-between items-center mb-4">
+                                    <span class="text-slate-300 dark:text-slate-300 light:text-slate-600 font-medium">Meta de Lucro Mensal</span> 
+                                    <span id="meta-lucro-valor" class="text-white dark:text-white light:text-slate-800 font-bold">R$ 10.000,00</span>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="flex justify-between text-sm mb-2">
+                                        <span class="text-slate-400 dark:text-slate-400 light:text-slate-600">Progresso</span> 
+                                        <span id="meta-progresso-texto" class="text-white dark:text-white light:text-slate-800 font-semibold">0%</span>
+                                    </div>
+                                    <div class="w-full bg-slate-600 dark:bg-slate-600 light:bg-slate-300 rounded-full h-3">
+                                        <div id="meta-progresso-barra" class="bg-gradient-to-r from-green-500 to-green-400 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4 text-sm">
+                                    <div>
+                                        <span class="text-slate-400 dark:text-slate-400 light:text-slate-600">Alcançado:</span> 
+                                        <span id="meta-alcancado" class="text-green-400 font-semibold ml-2">R$ 0,00</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-slate-400 dark:text-slate-400 light:text-slate-600">Restante:</span> 
+                                        <span id="meta-restante" class="text-orange-400 font-semibold ml-2">R$ 10.000,00</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-slate-700/50 dark:bg-slate-700/50 light:bg-slate-100 p-6 rounded-xl">
+                                <h4 class="text-white dark:text-white light:text-slate-800 font-semibold mb-4">📊 Estatísticas do Mês</h4>
+                                <div class="space-y-3">
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-400 dark:text-slate-400 light:text-slate-600">Dias no mês:</span> 
+                                        <span id="stat-dias-mes" class="text-white dark:text-white light:text-slate-800 font-semibold">30</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-400 dark:text-slate-400 light:text-slate-600">Dias restantes:</span> 
+                                        <span id="stat-dias-restantes" class="text-white dark:text-white light:text-slate-800 font-semibold">15</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-400 dark:text-slate-400 light:text-slate-600">Média diária necessária:</span> 
+                                        <span id="stat-media-diaria" class="text-orange-400 font-semibold">R$ 0,00</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-400 dark:text-slate-400 light:text-slate-600">Lucro médio/dia atual:</span> 
+                                        <span id="stat-lucro-medio-dia" class="text-green-400 font-semibold">R$ 0,00</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                        <div class="card p-6 rounded-2xl border border-slate-600/50">
+                            <h3 class="text-lg font-semibold text-white dark:text-white light:text-slate-800 mb-4">📈 Lucro por Mês</h3>
+                            <div class="h-64">
+                                <canvas id="lucro-mes-chart" class="w-full h-full"></canvas>
+                            </div>
+                        </div>
+                        <div class="card p-6 rounded-2xl border border-slate-600/50">
+                            <h3 class="text-lg font-semibold text-white dark:text-white light:text-slate-800 mb-4">📊 Vendas por Mês</h3>
+                            <div class="h-64">
+                                <canvas id="vendas-mes-chart" class="w-full h-full"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                        <div class="card p-6 rounded-2xl border border-slate-600/50">
+                            <h3 class="text-lg font-semibold text-white dark:text-white light:text-slate-800 mb-4">🥧 Custo vs Lucro</h3>
+                            <div class="h-64 flex items-center justify-center">
+                                <canvas id="custo-lucro-chart" width="250" height="250"></canvas>
+                            </div>
+                        </div>
+                        <div class="card p-6 rounded-2xl border border-slate-600/50">
+                            <h3 class="text-lg font-semibold text-white dark:text-white light:text-slate-800 mb-4">🏆 Top Produtos</h3>
+                            <div class="h-64">
+                                <canvas id="top-produtos-chart" class="w-full h-full"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card p-6 rounded-2xl border border-slate-600/50">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-semibold text-white dark:text-white light:text-slate-800">⚡ Atividade Recente</h3>
+                            <span class="text-slate-400 dark:text-slate-400 light:text-slate-600 text-sm">Últimos 5 pedidos</span>
+                        </div>
+                        <div id="atividade-recente-container" class="space-y-3">
+                            </div>
+                    </div>
                 </div>
-                <div class="bg-white/20 p-3 rounded-full"><svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg></div>
-              </div>
-            </div>
-            <div class="kpi-card bg-gradient-to-br from-purple-600 to-purple-700 p-6 rounded-2xl shadow-lg border border-purple-500/20">
-              <div class="flex items-center justify-between">
-                <div>
-                  <p class="text-purple-100 text-sm font-medium">📦 Total Pedidos</p>
-                  <p id="kpi-total-pedidos" class="text-3xl font-bold text-white mt-2">0</p>
-                  <p id="kpi-pedidos-variacao" class="text-purple-200 text-xs mt-1">+0% vs mês anterior</p>
+                <div id="pedidos-page" class="page-content hidden">
+                    <div class="card p-6 rounded-xl">
+                        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
+                            <h3 class="text-xl font-semibold text-white dark:text-white light:text-slate-800">Controle de Pedidos</h3>
+                            <div class="flex flex-wrap gap-2 items-center">
+                                <input type="date" id="filtro-data-inicio" class="px-3 py-2 bg-slate-700 dark:bg-slate-700 light:bg-white border border-slate-600 dark:border-slate-600 light:border-slate-300 rounded-lg text-white dark:text-white light:text-slate-800 text-sm focus:border-blue-500 focus:outline-none"> 
+                                <input type="date" id="filtro-data-fim" class="px-3 py-2 bg-slate-700 dark:bg-slate-700 light:bg-white border border-slate-600 dark:border-slate-600 light:border-slate-300 rounded-lg text-white dark:text-white light:text-slate-800 text-sm focus:border-blue-500 focus:outline-none"> 
+                                <select id="filtro-produto" class="px-3 py-2 bg-slate-700 dark:bg-slate-700 light:bg-white border border-slate-600 dark:border-slate-600 light:border-slate-300 rounded-lg text-white dark:text-white light:text-slate-800 text-sm focus:border-blue-500 focus:outline-none"> 
+                                    <option value="">Todos os produtos</option> 
+                                </select> 
+                                <select id="filtro-status-pedidos" class="px-3 py-2 bg-slate-700 dark:bg-slate-700 light:bg-white border border-slate-600 dark:border-slate-600 light:border-slate-300 rounded-lg text-white dark:text-white light:text-slate-800 text-sm focus:border-blue-500 focus:outline-none"> 
+                                    <option value="">Todos os status</option> 
+                                    <option value="Pendente">Pendente</option> 
+                                    <option value="Processando">Processando</option> 
+                                    <option value="Pago">Pago</option> 
+                                    <option value="Entregue">Entregue</option> 
+                                    <option value="Finalizado">Finalizado</option> 
+                                    <option value="Cancelado">Cancelado</option> 
+                                </select> 
+                                <button id="clear-filters-btn" class="px-3 py-2 bg-slate-600 hover:bg-slate-700 text-white text-sm rounded-lg transition-colors"> Limpar </button>
+                            </div>
+                            <div class="flex gap-2">
+                                <button id="export-pdf-btn" class="export-pulse bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm flex items-center">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg> PDF 
+                                </button> 
+                                <button id="export-excel-btn" class="export-pulse bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm flex items-center">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg> Excel 
+                                </button> 
+                                <button id="new-order-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm"> Novo Pedido </button>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm table-responsive">
+                                <thead>
+                                    <tr class="border-b border-slate-600 dark:border-slate-600 light:border-slate-300">
+                                        <th class="text-left py-3 px-2 text-slate-300 dark:text-slate-300 light:text-slate-600">Data</th>
+                                        <th class="text-left py-3 px-2 text-slate-300 dark:text-slate-300 light:text-slate-600">Cliente</th>
+                                        <th class="text-left py-3 px-2 text-slate-300 dark:text-slate-300 light:text-slate-600">Nº Pedido</th>
+                                        <th class="text-left py-3 px-2 text-slate-300 dark:text-slate-300 light:text-slate-600">Produto</th>
+                                        <th class="text-left py-3 px-2 text-slate-300 dark:text-slate-300 light:text-slate-600">Valor Shopee</th>
+                                        <th class="text-left py-3 px-2 text-slate-300 dark:text-slate-300 light:text-slate-600">Taxa %</th>
+                                        <th class="text-left py-3 px-2 text-slate-300 dark:text-slate-300 light:text-slate-600">Valor Líquido</th>
+                                        <th class="text-left py-3 px-2 text-slate-300 dark:text-slate-300 light:text-slate-600">Custo Fornec.</th>
+                                        <th class="text-left py-3 px-2 text-slate-300 dark:text-slate-300 light:text-slate-600">Pagador</th>
+                                        <th class="text-left py-3 px-2 text-slate-300 dark:text-slate-300 light:text-slate-600">Data Pag.</th>
+                                        <th class="text-left py-3 px-2 text-slate-300 dark:text-slate-300 light:text-slate-600">Data Rec.</th>
+                                        <th class="text-left py-3 px-2 text-slate-300 dark:text-slate-300 light:text-slate-600">Lucro</th>
+                                        <th class="text-left py-3 px-2 text-slate-300 dark:text-slate-300 light:text-slate-600">Status</th>
+                                        <th class="text-left py-3 px-2 text-slate-300 dark:text-slate-300 light:text-slate-600">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pedidos-tbody">
+                                    </tbody>
+                            </table >
+                        </div>
+                    </div>
                 </div>
-                <div class="bg-white/20 p-3 rounded-full"><svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg></div>
-              </div>
-            </div>
-            <div class="kpi-card bg-gradient-to-br from-orange-600 to-orange-700 p-6 rounded-2xl shadow-lg border border-orange-500/20">
-              <div class="flex items-center justify-between">
-                <div>
-                  <p class="text-orange-100 text-sm font-medium">📈 Ticket Médio</p>
-                  <p id="kpi-ticket-medio" class="text-3xl font-bold text-white mt-2">R$ 0,00</p>
-                  <p id="kpi-ticket-variacao" class="text-orange-200 text-xs mt-1">+0% vs mês anterior</p>
+                <div id="resumo-page" class="page-content hidden">
+                    <div class="card p-6 rounded-xl mb-6">
+                        <h3 class="text-xl font-semibold text-white dark:text-white light:text-slate-800 mb-4">Filtros de Análise</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label for="filtro-mes" class="block text-sm font-medium text-slate-300 dark:text-slate-300 light:text-slate-600 mb-2">Mês</label> 
+                                <select id="filtro-mes" class="w-full p-2 bg-slate-700 dark:bg-slate-700 light:bg-white border border-slate-600 dark:border-slate-600 light:border-slate-300 rounded-lg text-white dark:text-white light:text-slate-800 focus:border-blue-500 focus:outline-none"> 
+                                    <option value="">Todos os meses</option> 
+                                    <option value="01">Janeiro</option> 
+                                    <option value="02">Fevereiro</option> 
+                                    <option value="03">Março</option> 
+                                    <option value="04">Abril</option> 
+                                    <option value="05">Maio</option> 
+                                    <option value="06">Junho</option> 
+                                    <option value="07">Julho</option> 
+                                    <option value="08">Agosto</option> 
+                                    <option value="09">Setembro</option> 
+                                    <option value="10">Outubro</option> 
+                                    <option value="11">Novembro</option> 
+                                    <option value="12">Dezembro</option> 
+                                </select>
+                            </div>
+                            <div>
+                                <label for="filtro-ano" class="block text-sm font-medium text-slate-300 dark:text-slate-300 light:text-slate-600 mb-2">Ano</label> 
+                                <select id="filtro-ano" class="w-full p-2 bg-slate-700 dark:bg-slate-700 light:bg-white border border-slate-600 dark:border-slate-600 light:border-slate-300 rounded-lg text-white dark:text-white light:text-slate-800 focus:border-blue-500 focus:outline-none"> 
+                                    <option value="">Todos os anos</option> 
+                                    <option value="2024">2024</option> 
+                                    <option value="2023">2023</option> 
+                                    <option value="2022">2022</option> 
+                                </select>
+                            </div>
+                            <div class="flex items-end">
+                                <button id="clear-summary-filters-btn" class="w-full bg-slate-600 hover:bg-slate-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"> Limpar Filtros </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+                        <div class="metric-card p-4 rounded-xl">
+                            <div class="text-center">
+                                <p class="text-slate-400 dark:text-slate-400 light:text-slate-600 text-sm mb-1">Total Vendas</p>
+                                <p id="total-vendas" class="text-xl font-bold text-blue-400">R$ 0,00</p>
+                            </div>
+                        </div>
+                        <div class="metric-card p-4 rounded-xl">
+                            <div class="text-center">
+                                <p class="text-slate-400 dark:text-slate-400 light:text-slate-600 text-sm mb-1">Total Taxas</p>
+                                <p id="total-taxas" class="text-xl font-bold text-red-400">R$ 0,00</p>
+                            </div>
+                        </div>
+                        <div class="metric-card p-4 rounded-xl">
+                            <div class="text-center">
+                                <p class="text-slate-400 dark:text-slate-400 light:text-slate-600 text-sm mb-1">Total Recebido</p>
+                                <p id="total-recebido" class="text-xl font-bold text-green-400">R$ 0,00</p>
+                            </div>
+                        </div>
+                        <div class="metric-card p-4 rounded-xl">
+                            <div class="text-center">
+                                <p class="text-slate-400 dark:text-slate-400 light:text-slate-600 text-sm mb-1">Total Pago</p>
+                                <p id="total-pago" class="text-xl font-bold text-yellow-400">R$ 0,00</p>
+                            </div>
+                        </div>
+                        <div class="metric-card p-4 rounded-xl">
+                            <div class="text-center">
+                                <p class="text-slate-400 dark:text-slate-400 light:text-slate-600 text-sm mb-1">Lucro Total</p>
+                                <p id="lucro-total" class="text-xl font-bold text-green-400">R$ 0,00</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="card p-6 rounded-xl">
+                            <h3 class="text-xl font-semibold text-white dark:text-white light:text-slate-800 mb-4">Lucros por Mês</h3>
+                            <div id="grafico-lucros" class="h-64 flex items-center justify-center">
+                                <canvas id="chart-canvas" width="400" height="200" class="max-w-full"></canvas>
+                            </div>
+                        </div>
+                        <div class="card p-6 rounded-xl">
+                            <h3 class="text-xl font-semibold text-white dark:text-white light:text-slate-800 mb-4">Métodos de Pagamento</h3>
+                            <div id="metodos-pagamento-container" class="space-y-3">
+                                </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="bg-white/20 p-3 rounded-full"><svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg></div>
-              </div>
-            </div>
-            <div class="kpi-card bg-gradient-to-br from-teal-600 to-teal-700 p-6 rounded-2xl shadow-lg border border-teal-500/20">
-              <div class="flex items-center justify-between">
-                <div>
-                  <p class="text-teal-100 text-sm font-medium">📊 Margem Lucro</p>
-                  <p id="kpi-margem-lucro" class="text-3xl font-bold text-white mt-2">0%</p>
-                  <p id="kpi-margem-variacao" class="text-teal-200 text-xs mt-1">+0% vs mês anterior</p>
+                <div id="fechamento-page" class="page-content hidden">
+                    <div class="card p-6 rounded-xl mb-6">
+                        <h3 class="text-xl font-semibold text-white dark:text-white light:text-slate-800 mb-4">Configuração do Mês</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="saldo-inicial-input" class="block text-sm font-medium text-slate-300 dark:text-slate-300 light:text-slate-600 mb-2">Saldo Inicial do Mês (R$)</label> 
+                                <input type="number" id="saldo-inicial-input" step="0.01" class="w-full p-3 bg-slate-700 dark:bg-slate-700 light:bg-white border border-slate-600 dark:border-slate-600 light:border-slate-300 rounded-lg text-white dark:text-white light:text-slate-800 focus:border-blue-500 focus:outline-none" placeholder="Ex: 5000.00">
+                            </div>
+                            <div>
+                                <label for="mes-referencia" class="block text-sm font-medium text-slate-300 dark:text-slate-300 light:text-slate-600 mb-2">Mês de Referência</label> 
+                                <input type="month" id="mes-referencia" class="w-full p-3 bg-slate-700 dark:bg-slate-700 light:bg-white border border-slate-600 dark:border-slate-600 light:border-slate-300 rounded-lg text-white dark:text-white light:text-slate-800 focus:border-blue-500 focus:outline-none">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                        <div class="metric-card p-6 rounded-xl">
+                            <div class="text-center">
+                                <p class="text-slate-400 dark:text-slate-400 light:text-slate-600 text-sm mb-2">Saldo Inicial</p>
+                                <p id="saldo-inicial-display" class="text-2xl font-bold text-blue-400">R$ 0,00</p>
+                            </div>
+                        </div>
+                        <div class="metric-card p-6 rounded-xl">
+                            <div class="text-center">
+                                <p class="text-slate-400 dark:text-slate-400 light:text-slate-600 text-sm mb-2">Total Vendas</p>
+                                <p id="total-vendas-mes" class="text-2xl font-bold text-green-400">R$ 0,00</p>
+                            </div>
+                        </div>
+                        <div class="metric-card p-6 rounded-xl">
+                            <div class="text-center">
+                                <p class="text-slate-400 dark:text-slate-400 light:text-slate-600 text-sm mb-2">Total Recebido</p>
+                                <p id="total-recebido-mes" class="text-2xl font-bold text-green-400">R$ 0,00</p>
+                            </div>
+                        </div>
+                        <div class="metric-card p-6 rounded-xl">
+                            <div class="text-center">
+                                <p class="text-slate-400 dark:text-slate-400 light:text-slate-600 text-sm mb-2">Despesas (Custos)</p>
+                                <p id="despesas-mes" class="text-2xl font-bold text-red-400">R$ 0,00</p>
+                            </div>
+                        </div>
+                        <div class="metric-card p-6 rounded-xl">
+                            <div class="text-center">
+                                <p class="text-slate-400 dark:text-slate-400 light:text-slate-600 text-sm mb-2">Lucro Líquido</p>
+                                <p id="lucro-liquido-mes" class="text-2xl font-bold text-green-400">R$ 0,00</p>
+                            </div>
+                        </div>
+                        <div class="metric-card p-6 rounded-xl border-2 border-yellow-500">
+                            <div class="text-center">
+                                <p class="text-slate-400 dark:text-slate-400 light:text-slate-600 text-sm mb-2">Saldo Final</p>
+                                <p id="saldo-final-display" class="text-2xl font-bold text-yellow-400">R$ 0,00</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="card p-6 rounded-xl">
+                            <h4 class="text-lg font-semibold text-white dark:text-white light:text-slate-800 mb-4">Detalhamento do Período</h4>
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center p-3 bg-slate-700 dark:bg-slate-700 light:bg-slate-100 rounded-lg">
+                                    <span class="text-slate-300 dark:text-slate-300 light:text-slate-600">Número de Pedidos:</span> 
+                                    <span id="numero-pedidos-mes" class="text-white dark:text-white light:text-slate-800 font-semibold">0</span>
+                                </div>
+                                <div class="flex justify-between items-center p-3 bg-slate-700 dark:bg-slate-700 light:bg-slate-100 rounded-lg">
+                                    <span class="text-slate-300 dark:text-slate-300 light:text-slate-600">Ticket Médio:</span> 
+                                    <span id="ticket-medio-mes" class="text-white dark:text-white light:text-slate-800 font-semibold">R$ 0,00</span>
+                                </div>
+                                <div class="flex justify-between items-center p-3 bg-slate-700 dark:bg-slate-700 light:bg-slate-100 rounded-lg">
+                                    <span class="text-slate-300 dark:text-slate-300 light:text-slate-600">Margem de Lucro:</span> 
+                                    <span id="margem-lucro-mes" class="text-white dark:text-white light:text-slate-800 font-semibold">0%</span>
+                                </div>
+                                <div class="flex justify-between items-center p-3 bg-slate-700 dark:bg-slate-700 light:bg-slate-100 rounded-lg">
+                                    <span class="text-slate-300 dark:text-slate-300 light:text-slate-600">Período Ativo:</span> 
+                                    <span id="periodo-ativo" class="text-white dark:text-white light:text-slate-800 font-semibold">-</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card p-6 rounded-xl">
+                            <h4 class="text-lg font-semibold text-white dark:text-white light:text-slate-800 mb-4">Ações do Mês</h4>
+                            <div class="space-y-4">
+                                <button id="abrir-novo-mes-btn" class="w-full bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center">
+                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg> Abrir Novo Mês 
+                                </button> 
+                                <button id="fechar-mes-atual-btn" class="w-full bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center">
+                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Fechar Mês Atual 
+                                </button> 
+                                <button id="exportar-relatorio-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center">
+                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg> Exportar Relatório 
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="bg-white/20 p-3 rounded-full"><svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg></div>
-              </div>
-            </div>
-          </div>
-          <div class="card p-6 rounded-2xl mb-8 border border-slate-600/50">
-            <div class="flex justify-between items-center mb-6">
-              <h3 class="text-xl font-semibold text-white dark:text-white light:text-slate-800">🎯 Painel de Metas</h3><button id="edit-meta-btn" class="text-blue-400 hover:text-blue-300 text-sm font-medium"> Editar Meta </button>
-            </div>
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div class="bg-slate-700/50 dark:bg-slate-700/50 light:bg-slate-100 p-6 rounded-xl">
-                <div class="flex justify-between items-center mb-4"><span class="text-slate-300 dark:text-slate-300 light:text-slate-600 font-medium">Meta de Lucro Mensal</span> <span id="meta-lucro-valor" class="text-white dark:text-white light:text-slate-800 font-bold">R$ 10.000,00</span></div>
-                <div class="mb-3">
-                  <div class="flex justify-between text-sm mb-2"><span class="text-slate-400 dark:text-slate-400 light:text-slate-600">Progresso</span> <span id="meta-progresso-texto" class="text-white dark:text-white light:text-slate-800 font-semibold">0%</span></div>
-                  <div class="w-full bg-slate-600 dark:bg-slate-600 light:bg-slate-300 rounded-full h-3">
-                    <div id="meta-progresso-barra" class="bg-gradient-to-r from-green-500 to-green-400 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
-                  </div>
-                </div>
-                <div class="grid grid-cols-2 gap-4 text-sm">
-                  <div><span class="text-slate-400 dark:text-slate-400 light:text-slate-600">Alcançado:</span> <span id="meta-alcancado" class="text-green-400 font-semibold ml-2">R$ 0,00</span></div>
-                  <div><span class="text-slate-400 dark:text-slate-400 light:text-slate-600">Restante:</span> <span id="meta-restante" class="text-orange-400 font-semibold ml-2">R$ 10.000,00</span></div>
-                </div>
-              </div>
-              <div class="bg-slate-700/50 dark:bg-slate-700/50 light:bg-slate-100 p-6 rounded-xl">
-                <h4 class="text-white dark:text-white light:text-slate-800 font-semibold mb-4">📊 Estatísticas do Mês</h4>
-                <div class="space-y-3">
-                  <div class="flex justify-between"><span class="text-slate-400 dark:text-slate-400 light:text-slate-600">Dias no mês:</span> <span id="stat-dias-mes" class="text-white dark:text-white light:text-slate-800 font-semibold">30</span></div>
-                  <div class="flex justify-between"><span class="text-slate-400 dark:text-slate-400 light:text-slate-600">Dias restantes:</span> <span id="stat-dias-restantes" class="text-white dark:text-white light:text-slate-800 font-semibold">15</span></div>
-                  <div class="flex justify-between"><span class="text-slate-400 dark:text-slate-400 light:text-slate-600">Média diária necessária:</span> <span id="stat-media-diaria" class="text-orange-400 font-semibold">R$ 0,00</span></div>
-                  <div class="flex justify-between"><span class="text-slate-400 dark:text-slate-400 light:text-slate-600">Lucro médio/dia atual:</span> <span id="stat-lucro-medio-dia" class="text-green-400 font-semibold">R$ 0,00</span></div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            <div class="card p-6 rounded-2xl border border-slate-600/50">
-              <h3 class="text-lg font-semibold text-white dark:text-white light:text-slate-800 mb-4">📈 Lucro por Mês</h3>
-              <div class="h-64"><canvas id="lucro-mes-chart" class="w-full h-full"></canvas></div>
-            </div>
-            <div class="card p-6 rounded-2xl border border-slate-600/50">
-              <h3 class="text-lg font-semibold text-white dark:text-white light:text-slate-800 mb-4">📊 Vendas por Mês</h3>
-              <div class="h-64"><canvas id="vendas-mes-chart" class="w-full h-full"></canvas></div>
-            </div>
-          </div>
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            <div class="card p-6 rounded-2xl border border-slate-600/50">
-              <h3 class="text-lg font-semibold text-white dark:text-white light:text-slate-800 mb-4">🥧 Custo vs Lucro</h3>
-              <div class="h-64 flex items-center justify-center"><canvas id="custo-lucro-chart" width="250" height="250"></canvas></div>
-            </div>
-            <div class="card p-6 rounded-2xl border border-slate-600/50">
-              <h3 class="text-lg font-semibold text-white dark:text-white light:text-slate-800 mb-4">🏆 Top Produtos</h3>
-              <div class="h-64"><canvas id="top-produtos-chart" class="w-full h-full"></canvas></div>
-            </div>
-          </div>
-          <div class="card p-6 rounded-2xl border border-slate-600/50">
+            </main>
+        </div>
+    </div>
+    <div id="pedido-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-slate-800 dark:bg-slate-800 light:bg-white p-6 rounded-xl w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4">
-              <h3 class="text-lg font-semibold text-white dark:text-white light:text-slate-800">⚡ Atividade Recente</h3><span class="text-slate-400 dark:text-slate-400 light:text-slate-600 text-sm">Últimos 5 pedidos</span>
+                <h3 id="modal-title" class="text-xl font-semibold text-white dark:text-white light:text-slate-800">Novo Pedido</h3>
+                <button id="close-modal-btn" class="text-slate-400 hover:text-white">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
             </div>
-            <div id="atividade-recente-container" class="space-y-3"></div>
-          </div>
+            <form id="pedido-form">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div><label for="data" class="block text-sm font-medium text-slate-300 dark:text-slate-300 light:text-slate-600 mb-1">Data</label> <input type="date" id="data" name="data" required class="w-full p-2 bg-slate-700 dark:bg-slate-700 light:bg-white border border-slate-600 dark:border-slate-600 light:border-slate-300 rounded-lg text-white dark:text-white light:text-slate-800 focus:border-blue-500 focus:outline-none"></div>
+                    <div><label for="cliente" class="block text-sm font-medium text-slate-300 dark:text-slate-300 light:text-slate-600 mb-1">Cliente</label> <input type="text" id="cliente" name="cliente" required class="w-full p-2 bg-slate-700 dark:bg-slate-700 light:bg-white border border-slate-600 dark:border-slate-600 light:border-slate-300 rounded-lg text-white dark:text-white light:text-slate-800 focus:border-blue-500 focus:outline-none" placeholder="Nome do cliente"></div>
+                    <div><label for="numeroPedido" class="block text-sm font-medium text-slate-300 dark:text-slate-300 light:text-slate-600 mb-1">Número do Pedido</label> <input type="text" id="numeroPedido" name="numeroPedido" required class="w-full p-2 bg-slate-700 dark:bg-slate-700 light:bg-white border border-slate-600 dark:border-slate-600 light:border-slate-300 rounded-lg text-white dark:text-white light:text-slate-800 focus:border-blue-500 focus:outline-none" placeholder="Ex: #1234"></div>
+                    <div><label for="produto" class="block text-sm font-medium text-slate-300 dark:text-slate-300 light:text-slate-600 mb-1">Produto</label> <input type="text" id="produto" name="produto" required class="w-full p-2 bg-slate-700 dark:bg-slate-700 light:bg-white border border-slate-600 dark:border-slate-600 light:border-slate-300 rounded-lg text-white dark:text-white light:text-slate-800 focus:border-blue-500 focus:outline-none" placeholder="Nome do produto"></div>
+                    <div><label for="valorShopee" class="block text-sm font-medium text-slate-300 dark:text-slate-300 light:text-slate-600 mb-1">Valor Shopee (R$)</label> <input type="number" id="valorShopee" name="valorShopee" step="0.01" required class="w-full p-2 bg-slate-700 dark:bg-slate-700 light:bg-white border border-slate-600 dark:border-slate-600 light:border-slate-300 rounded-lg text-white dark:text-white light:text-slate-800 focus:border-blue-500 focus:outline-none"></div>
+                    <div><label for="taxaShopee" class="block text-sm font-medium text-slate-300 dark:text-slate-300 light:text-slate-600 mb-1">Taxa Shopee (%)</label> <input type="number" id="taxaShopee" name="taxaShopee" step="0.01" required class="w-full p-2 bg-slate-700 dark:bg-slate-700 light:bg-white border border-slate-600 dark:border-slate-600 light:border-slate-300 rounded-lg text-white dark:text-white light:text-slate-800 focus:border-blue-500 focus:outline-none"></div>
+                    <div><label for="valorLiquido" class="block text-sm font-medium text-slate-300 dark:text-slate-300 light:text-slate-600 mb-1">Valor Líquido (R$)</label> <input type="number" id="valorLiquido" name="valorLiquido" step="0.01" readonly class="w-full p-2 bg-slate-600 border border-slate-500 rounded-lg text-slate-300 cursor-not-allowed"></div>
+                    <div><label for="custoFornecedor" class="block text-sm font-medium text-slate-300 dark:text-slate-300 light:text-slate-600 mb-1">Custo Fornecedor (R$)</label> <input type="number" id="custoFornecedor" name="custoFornecedor" step="0.01" required class="w-full p-2 bg-slate-700 dark:bg-slate-700 light:bg-white border border-slate-600 dark:border-slate-600 light:border-slate-300 rounded-lg text-white dark:text-white light:text-slate-800 focus:border-blue-500 focus:outline-none"></div>
+                    <div><label for="pagador" class="block text-sm font-medium text-slate-300 dark:text-slate-300 light:text-slate-600 mb-1">Pagador</label> <input type="text" id="pagador" name="pagador" required class="w-full p-2 bg-slate-700 dark:bg-slate-700 light:bg-white border border-slate-600 dark:border-slate-600 light:border-slate-300 rounded-lg text-white dark:text-white light:text-slate-800 focus:border-blue-500 focus:outline-none" placeholder="Quem vai pagar"></div>
+                    <div><label for="dataPagamento" class="block text-sm font-medium text-slate-300 dark:text-slate-300 light:text-slate-600 mb-1">Data de Pagamento</label> <input type="date" id="dataPagamento" name="dataPagamento" class="w-full p-2 bg-slate-700 dark:bg-slate-700 light:bg-white border border-slate-600 dark:border-slate-600 light:border-slate-300 rounded-lg text-white dark:text-white light:text-slate-800 focus:border-blue-500 focus:outline-none"></div>
+                    <div><label for="dataRecebimento" class="block text-sm font-medium text-slate-300 dark:text-slate-300 light:text-slate-600 mb-1">Data de Recebimento</label> <input type="date" id="dataRecebimento" name="dataRecebimento" class="w-full p-2 bg-slate-700 dark:bg-slate-700 light:bg-white border border-slate-600 dark:border-slate-600 light:border-slate-300 rounded-lg text-white dark:text-white light:text-slate-800 focus:border-blue-500 focus:outline-none"></div>
+                    <div><label for="lucro" class="block text-sm font-medium text-slate-300 dark:text-slate-300 light:text-slate-600 mb-1">Lucro (R$)</label> <input type="number" id="lucro" name="lucro" step="0.01" readonly class="w-full p-2 bg-slate-600 border border-slate-500 rounded-lg text-slate-300 cursor-not-allowed"></div>
+                    <div><label for="metodoPagamento" class="block text-sm font-medium text-slate-300 dark:text-slate-300 light:text-slate-600 mb-1">Método de Pagamento</label> <select id="metodoPagamento" name="metodoPagamento" required class="w-full p-2 bg-slate-700 dark:bg-slate-700 light:bg-white border border-slate-600 dark:border-slate-600 light:border-slate-300 rounded-lg text-white dark:text-white light:text-slate-800 focus:border-blue-500 focus:outline-none"> <option value="">Selecione...</option> <option value="Dinheiro">Dinheiro</option> <option value="Cartão de Crédito">Cartão de Crédito</option> <option value="Cartão de Débito">Cartão de Débito</option> <option value="PIX">PIX</option> <option value="Boleto">Boleto</option> <option value="Transferência">Transferência</option> </select></div>
+                    <div><label for="status" class="block text-sm font-medium text-slate-300 dark:text-slate-300 light:text-slate-600 mb-1">Status</label> <select id="status" name="status" required class="w-full p-2 bg-slate-700 dark:bg-slate-700 light:bg-white border border-slate-600 dark:border-slate-600 light:border-slate-300 rounded-lg text-white dark:text-white light:text-slate-800 focus:border-blue-500 focus:outline-none"> <option value="">Selecione...</option> <option value="Pendente">Pendente</option> <option value="Processando">Processando</option> <option value="Pago">Pago</option> <option value="Entregue">Entregue</option> <option value="Finalizado">Finalizado</option> <option value="Cancelado">Cancelado</option> </select></div>
+                </div>
+                <div class="flex gap-3 mt-6">
+                    <button type="submit" id="save-btn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium transition-colors"> 
+                        <span id="save-text">Salvar Pedido</span> 
+                        <span id="save-loading" class="hidden">Salvando...</span> 
+                    </button> 
+                    <button type="button" id="cancel-modal-btn" class="px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg font-medium transition-colors"> Cancelar </button>
+                </div>
+            </form>
         </div>
-        
-        <div id="pedidos-page" class="page-content hidden">
-          <div class="card p-6 rounded-xl">
-            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
-              <h3 class="text-xl font-semibold text-white dark:text-white light:text-slate-800">Controle de Pedidos</h3>
-              <div class="flex flex-wrap gap-2 items-center">
-                <input type="date" id="filtro-data-inicio" class="px-3 py-2 bg-slate-700 dark:bg-slate-700 light:bg-white border border-slate-600 dark:border-slate-600 light:border-slate-300 rounded-lg text-white dark:text-white light:text-slate-800 text-sm focus:border-blue-500 focus:outline-none">
-                <input type="date" id="filtro-data-fim" class="px-3 py-2 bg-slate-700 dark:bg-slate-700 light:bg-white border border-slate-600 dark:border-slate-600 light:border-slate-300 rounded-lg text-white dark:text-white light:text-slate-800 text-sm focus:border-blue-500 focus:outline-none">
-                <select id="filtro-produto" class="px-3 py-2 bg-slate-700 dark:bg-slate-700 light:bg-white border border-slate-600 dark:border-slate-600 light:border-slate-300 rounded-lg text-white dark:text-white light:text-slate-800 text-sm focus:border-blue-500 focus:outline-none"> <option value="">Todos os produtos</option> </select>
-                <select id="filtro-status-pedidos" class="px-3 py-2 bg-slate-700 dark:bg-slate-700 light:bg-white border border-slate-600 dark:border-slate-600 light:border-slate-300 rounded-lg text-white dark:text-white light:text-slate-800 text-sm focus:border-blue-500 focus:outline-none"> <option value="">Todos os status</option> <option value="Pendente">Pendente</option> <option value="Processando">Processando</option> <option value="Pago">Pago</option> <option value="Entregue">Entregue</option> <option value="Finalizado">Finalizado</option> <option value="Cancelado">Cancelado</option> </select>
-                <button id="clear-filters-btn" class="px-3 py-2 bg-slate-600 hover:bg-slate-700 text-white text-sm rounded-lg transition-colors"> Limpar </button>
-              </div>
-              <div class="flex gap-2">
-                <button id="export-pdf-btn" class="export-pulse bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm flex items-center"><svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg> PDF </button>
-                <button id="export-excel-btn" class="export-pulse bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm flex items-center"><svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg> Excel </button>
-                <button id="new-order-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm"> Novo Pedido </button>
-              </div>
-            </div>
-            <div class="overflow-x-auto">
-              <table class="w-full text-sm table-responsive">
-                <thead>
-                  <tr class="border-b border-slate-600 dark:border-slate-600 light:border-slate-300">
-                    <th class="text-left py-3 px-2 text-slate-300 dark:text-slate-300 light:text-slate-600">Data</th>
-                    <th class="text-left py-3 px-2 text-slate-300 dark:text-slate-300 light:text-slate-600">Cliente</th>
-                    <th class="text-left py-3 px-2 text-slate-300 dark:text-slate-300 light:text-slate-600">Nº Pedido</th>
-                    <th class="text-left py-3 px-2 text-slate-300 dark:text-slate-300 light:text-slate-600">Produto</th>
-                    <th class="text-left py-3 px-2 text-slate-300 dark:text-slate-300 light:text-slate-600">Valor Shopee</th>
-                    <th class="text-left py-3 px-2 text-slate-300 dark:text-slate-300 light:text-slate-600">Taxa %</th>
-                    <th class="text-left py-3 px-2 text-slate-300 dark:text-slate-300 light:text-slate-600">Valor Líquido</th>
-                    <th class="text-left py-3 px-2 text-slate-300 dark:text-slate-300 light:text-slate-600">Custo Fornec.</th>
-                    <th class="text-left py-3 px-2 text-slate-300 dark:text-slate-300 light:text-slate-600">Pagador</th>
-                    <th class="text-left py-3 px-2 text-slate-300 dark:text-slate-300 light:text-slate-600">Data Pag.</th>
-                    <th class="text-left py-3 px-2 text-slate-300 dark:text-slate-300 light:text-slate-600">Data Rec.</th>
-                    <th class="text-left py-3 px-2 text-slate-300 dark:text-slate-300 light:text-slate-600">Lucro</th>
-                    <th class="text-left py-3 px-2 text-slate-300 dark:text-slate-300 light:text-slate-600">Status</th>
-                    <th class="text-left py-3 px-2 text-slate-300 dark:text-slate-300 light:text-slate-600">Ações</th>
-                  </tr>
-                </thead>
-                <tbody id="pedidos-tbody"></tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-        
-        <div id="resumo-page" class="page-content hidden">
-          <div class="card p-6 rounded-xl mb-6">
-            <h3 class="text-xl font-semibold text-white dark:text-white light:text-slate-800 mb-4">Filtros de Análise</h3>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div><label for="filtro-mes" class="block text-sm font-medium text-slate-300 dark:text-slate-300 light:text-slate-600 mb-2">Mês</label> <select id="filtro-mes" class="w-full p-2 bg-slate-700 dark:bg-slate-700 light:bg-white border border-slate-600 dark:border-slate-600 light:border-slate-300 rounded-lg text-white dark:text-white light:text-slate-800 focus:border-blue-500 focus:outline-none"> <option value="">Todos os meses</option> <option value="01">Janeiro</option> <option value="02">Fevereiro</option> <option value="03">Março</option> <option value="04">Abril</option> <option value="05">Maio</option> <option value="06">Junho</option> <option value="07">Julho</option> <option value="08">Agosto</option> <option value="09">Setembro</option> <option value="10">Outubro</option> <option value="11">Novembro</option> <option value="12">Dezembro</option> </select></div>
-              <div><label for="filtro-ano" class="block text-sm font-medium text-slate-300 dark:text-slate-300 light:text-slate-600 mb-2">Ano</label> <select id="filtro-ano" class="w-full p-2 bg-slate-700 dark:bg-slate-700 light:bg-white border border-slate-600 dark:border-slate-600 light:border-slate-300 rounded-lg text-white dark:text-white light:text-slate-800 focus:border-blue-500 focus:outline-none"> <option value="">Todos os anos</option> <option value="2024">2024</option> <option value="2023">2023</option> <option value="2022">2022</option> </select></div>
-              <div class="flex items-end"><button id="clear-summary-filters-btn" class="w-full bg-slate-600 hover:bg-slate-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"> Limpar Filtros </button></div>
-            </div>
-          </div>
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-            <div class="metric-card p-4 rounded-xl"><div class="text-center"><p class="text-slate-400 dark:text-slate-400 light:text-slate-600 text-sm mb-1">Total Vendas</p><p id="total-vendas" class="text-xl font-bold text-blue-400">R$ 0,00</p></div></div>
-            <div class="metric-card p-4 rounded-xl"><div class="text-center"><p class="text-slate-400 dark:text-slate-400 light:text-slate-600 text-sm mb-1">Total Taxas</p><p id="total-taxas" class="text-xl font-bold text-red-400">R$ 0,00</p></div></div>
-            <div class="metric-card p-4 rounded-xl"><div class="text-center"><p class="text-slate-400 dark:text-slate-400 light:text-slate-600 text-sm mb-1">Total Recebido</p><p id="total-recebido" class="text-xl font-bold text-green-400">R$ 0,00</p></div></div>
-            <div class="metric-card p-4 rounded-xl"><div class="text-center"><p class="text-slate-400 dark:text-slate-400 light:text-slate-600 text-sm mb-1">Total Pago</p><p id="total-pago" class="text-xl font-bold text-yellow-400">R$ 0,00</p></div></div>
-            <div class="metric-card p-4 rounded-xl"><div class="text-center"><p class="text-slate-400 dark:text-slate-400 light:text-slate-600 text-sm mb-1">Lucro Total</p><p id="lucro-total" class="text-xl font-bold text-green-400">R$ 0,00</p></div></div>
-          </div>
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div class="card p-6 rounded-xl">
-              <h3 class="text-xl font-semibold text-white dark:text-white light:text-slate-800 mb-4">Lucros por Mês</h3>
-              <div id="grafico-lucros" class="h-64 flex items-center justify-center"><canvas id="chart-canvas" width="400" height="200" class="max-w-full"></canvas></div>
-            </div>
-            <div class="card p-6 rounded-xl">
-              <h3 class="text-xl font-semibold text-white dark:text-white light:text-slate-800 mb-4">Métodos de Pagamento</h3>
-              <div id="metodos-pagamento-container" class="space-y-3"></div>
-            </div>
-          </div>
-        </div>
-        
-        <div id="fechamento-page" class="page-content hidden">
-          <div class="card p-6 rounded-xl mb-6">
-            <h3 class="text-xl font-semibold text-white dark:text-white light:text-slate-800 mb-4">Configuração do Mês</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div><label for="saldo-inicial-input" class="block text-sm font-medium text-slate-300 dark:text-slate-300 light:text-slate-600 mb-2">Saldo Inicial do Mês (R$)</label> <input type="number" id="saldo-inicial-input" step="0.01" class="w-full p-3 bg-slate-700 dark:bg-slate-700 light:bg-white border border-slate-600 dark:border-slate-600 light:border-slate-300 rounded-lg text-white dark:text-white light:text-slate-800 focus:border-blue-500 focus:outline-none" placeholder="Ex: 5000.00"></div>
-              <div><label for="mes-referencia" class="block text-sm font-medium text-slate-300 dark:text-slate-300 light:text-slate-600 mb-2">Mês de Referência</label> <input type="month" id="mes-referencia" class="w-full p-3 bg-slate-700 dark:bg-slate-700 light:bg-white border border-slate-600 dark:border-slate-600 light:border-slate-300 rounded-lg text-white dark:text-white light:text-slate-800 focus:border-blue-500 focus:outline-none"></div>
-            </div>
-          </div>
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-            <div class="metric-card p-6 rounded-xl"><div class="text-center"><p class="text-slate-400 dark:text-slate-400 light:text-slate-600 text-sm mb-2">Saldo Inicial</p><p id="saldo-inicial-display" class="text-2xl font-bold text-blue-400">R$ 0,00</p></div></div>
-            <div class="metric-card p-6 rounded-xl"><div class="text-center"><p class="text-slate-400 dark:text-slate-400 light:text-slate-600 text-sm mb-2">Total Vendas</p><p id="total-vendas-mes" class="text-2xl font-bold text-green-400">R$ 0,00</p></div></div>
-            <div class="metric-card p-6 rounded-xl"><div class="text-center"><p class="text-slate-400 dark:text-slate-400 light:text-slate-600 text-sm mb-2">Total Recebido</p><p id="total-recebido-mes" class="text-2xl font-bold text-green-400">R$ 0,00</p></div></div>
-            <div class="metric-card p-6 rounded-xl"><div class="text-center"><p class="text-slate-400 dark:text-slate-400 light:text-slate-600 text-sm mb-2">Despesas (Custos)</p><p id="despesas-mes" class="text-2xl font-bold text-red-400">R$ 0,00</p></div></div>
-            <div class="metric-card p-6 rounded-xl"><div class="text-center"><p class="text-slate-400 dark:text-slate-400 light:text-slate-600 text-sm mb-2">Lucro Líquido</p><p id="lucro-liquido-mes" class="text-2xl font-bold text-green-400">R$ 0,00</p></div></div>
-            <div class="metric-card p-6 rounded-xl border-2 border-yellow-500"><div class="text-center"><p class="text-slate-400 dark:text-slate-400 light:text-slate-600 text-sm mb-2">Saldo Final</p><p id="saldo-final-display" class="text-2xl font-bold text-yellow-400">R$ 0,00</p></div></div>
-          </div>
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div class="card p-6 rounded-xl">
-              <h4 class="text-lg font-semibold text-white dark:text-white light:text-slate-800 mb-4">Detalhamento do Período</h4>
-              <div class="space-y-3">
-                <div class="flex justify-between items-center p-3 bg-slate-700 dark:bg-slate-700 light:bg-slate-100 rounded-lg"><span class="text-slate-300 dark:text-slate-300 light:text-slate-600">Número de Pedidos:</span> <span id="numero-pedidos-mes" class="text-white dark:text-white light:text-slate-800 font-semibold">0</span></div>
-                <div class="flex justify-between items-center p-3 bg-slate-700 dark:bg-slate-700 light:bg-slate-100 rounded-lg"><span class="text-slate-300 dark:text-slate-300 light:text-slate-600">Ticket Médio:</span> <span id="ticket-medio-mes" class="text-white dark:text-white light:text-slate-800 font-semibold">R$ 0,00</span></div>
-                <div class="flex justify-between items-center p-3 bg-slate-700 dark:bg-slate-700 light:bg-slate-100 rounded-lg"><span class="text-slate-300 dark:text-slate-300 light:text-slate-600">Margem de Lucro:</span> <span id="margem-lucro-mes" class="text-white dark:text-white light:text-slate-800 font-semibold">0%</span></div>
-                <div class="flex justify-between items-center p-3 bg-slate-700 dark:bg-slate-700 light:bg-slate-100 rounded-lg"><span class="text-slate-300 dark:text-slate-300 light:text-slate-600">Período Ativo:</span> <span id="periodo-ativo" class="text-white dark:text-white light:text-slate-800 font-semibold">-</span></div>
-              </div>
-            </div>
-            <div class="card p-6 rounded-xl">
-              <h4 class="text-lg font-semibold text-white dark:text-white light:text-slate-800 mb-4">Ações do Mês</h4>
-              <div class="space-y-4">
-                <button id="abrir-novo-mes-btn" class="w-full bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center"><svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg> Abrir Novo Mês </button>
-                <button id="fechar-mes-atual-btn" class="w-full bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center"><svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Fechar Mês Atual </button>
-                <button id="exportar-relatorio-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center"><svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg> Exportar Relatório </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </main>
     </div>
-  </div>
-  
-  <div id="pedido-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
-    <div class="bg-slate-800 dark:bg-slate-800 light:bg-white p-6 rounded-xl w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
-      <div class="flex justify-between items-center mb-4">
-        <h3 id="modal-title" class="text-xl font-semibold text-white dark:text-white light:text-slate-800">Novo Pedido</h3>
-        <button id="close-modal-btn" class="text-slate-400 hover:text-white"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
-      </div>
-      <form id="pedido-form">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div><label for="data" class="block text-sm font-medium text-slate-300 dark:text-slate-300 light:text-slate-600 mb-1">Data</label> <input type="date" id="data" name="data" required class="w-full p-2 bg-slate-700 dark:bg-slate-700 light:bg-white border border-slate-600 dark:border-slate-600 light:border-slate-300 rounded-lg text-white dark:text-white light:text-slate-800 focus:border-blue-500 focus:outline-none"></div>
-          <div><label for="cliente" class="block text-sm font-medium text-slate-300 dark:text-slate-300 light:text-slate-600 mb-1">Cliente</label> <input type="text" id="cliente" name="cliente" required class="w-full p-2 bg-slate-700 dark:bg-slate-700 light:bg-white border border-slate-600 dark:border-slate-600 light:border-slate-300 rounded-lg text-white dark:text-white light:text-slate-800 focus:border-blue-500 focus:outline-none" placeholder="Nome do cliente"></div>
-          <div><label for="numeroPedido" class="block text-sm font-medium text-slate-300 dark:text-slate-300 light:text-slate-600 mb-1">Número do Pedido</label> <input type="text" id="numeroPedido" name="numeroPedido" required class="w-full p-2 bg-slate-700 dark:bg-slate-700 light:bg-white border border-slate-600 dark:border-slate-600 light:border-slate-300 rounded-lg text-white dark:text-white light:text-slate-800 focus:border-blue-500 focus:outline-none" placeholder="Ex: #1234"></div>
-          <div><label for="produto" class="block text-sm font-medium text-slate-300 dark:text-slate-300 light:text-slate-600 mb-1">Produto</label> <input type="text" id="produto" name="produto" required class="w-full p-2 bg-slate-700 dark:bg-slate-700 light:bg-white border border-slate-600 dark:border-slate-600 light:border-slate-300 rounded-lg text-white dark:text-white light:text-slate-800 focus:border-blue-500 focus:outline-none" placeholder="Nome do produto"></div>
-          <div><label for="valorShopee" class="block text-sm font-medium text-slate-300 dark:text-slate-300 light:text-slate-600 mb-1">Valor Shopee (R$)</label> <input type="number" id="valorShopee" name="valorShopee" step="0.01" required class="w-full p-2 bg-slate-700 dark:bg-slate-700 light:bg-white border border-slate-600 dark:border-slate-600 light:border-slate-300 rounded-lg text-white dark:text-white light:text-slate-800 focus:border-blue-500 focus:outline-none"></div>
-          <div><label for="taxaShopee" class="block text-sm font-medium text-slate-300 dark:text-slate-300 light:text-slate-600 mb-1">Taxa Shopee (%)</label> <input type="number" id="taxaShopee" name="taxaShopee" step="0.01" required class="w-full p-2 bg-slate-700 dark:bg-slate-700 light:bg-white border border-slate-600 dark:border-slate-600 light:border-slate-300 rounded-lg text-white dark:text-white light:text-slate-800 focus:border-blue-500 focus:outline-none"></div>
-          <div><label for="valorLiquido" class="block text-sm font-medium text-slate-300 dark:text-slate-300 light:text-slate-600 mb-1">Valor Líquido (R$)</LAbel> <input type="number" id="valorLiquido" name="valorLiquido" step="0.01" readonly class="w-full p-2 bg-slate-600 border border-slate-500 rounded-lg text-slate-300 cursor-not-allowed"></div>
-          <div><label for="custoFornecedor" class="block text-sm font-medium text-slate-300 dark:text-slate-300 light:text-slate-600 mb-1">Custo Fornecedor (R$)</label> <input type="number" id="custoFornecedor" name="custoFornecedor" step="0.01" required class="w-full p-2 bg-slate-700 dark:bg-slate-700 light:bg-white border border-slate-600 dark:border-slate-600 light:border-slate-300 rounded-lg text-white dark:text-white light:text-slate-800 focus:border-blue-500 focus:outline-none"></div>
-          <div><label for="pagador" class="block text-sm font-medium text-slate-300 dark:text-slate-300 light:text-slate-600 mb-1">Pagador</label> <input type="text" id="pagador" name="pagador" required class="w-full p-2 bg-slate-700 dark:bg-slate-700 light:bg-white border border-slate-600 dark:border-slate-600 light:border-slate-300 rounded-lg text-white dark:text-white light:text-slate-800 focus:border-blue-500 focus:outline-none" placeholder="Quem vai pagar"></div>
-          <div><label for="dataPagamento" class="block text-sm font-medium text-slate-300 dark:text-slate-300 light:text-slate-600 mb-1">Data de Pagamento</label> <input type="date" id="dataPagamento" name="dataPagamento" class="w-full p-2 bg-slate-700 dark:bg-slate-700 light:bg-white border border-slate-600 dark:border-slate-600 light:border-slate-300 rounded-lg text-white dark:text-white light:text-slate-800 focus:border-blue-500 focus:outline-none"></div>
-          <div><label for="dataRecebimento" class="block text-sm font-medium text-slate-300 dark:text-slate-300 light:text-slate-600 mb-1">Data de Recebimento</label> <input type="date" id="dataRecebimento" name="dataRecebimento" class="w-full p-2 bg-slate-700 dark:bg-slate-700 light:bg-white border border-slate-600 dark:border-slate-600 light:border-slate-300 rounded-lg text-white dark:text-white light:text-slate-800 focus:border-blue-500 focus:outline-none"></div>
-          <div><label for="lucro" class="block text-sm font-medium text-slate-300 dark:text-slate-300 light:text-slate-600 mb-1">Lucro (R$)</label> <input type="number" id="lucro" name="lucro" step="0.01" readonly class="w-full p-2 bg-slate-600 border border-slate-500 rounded-lg text-slate-300 cursor-not-allowed"></div>
-          <div><label for="metodoPagamento" class="block text-sm font-medium text-slate-300 dark:text-slate-300 light:text-slate-600 mb-1">Método de Pagamento</label> <select id="metodoPagamento" name="metodoPagamento" required class="w-full p-2 bg-slate-700 dark:bg-slate-700 light:bg-white border border-slate-600 dark:border-slate-600 light:border-slate-300 rounded-lg text-white dark:text-white light:text-slate-800 focus:border-blue-500 focus:outline-none"> <option value="">Selecione...</option> <option value="Dinheiro">Dinheiro</option> <option value="Cartão de Crédito">Cartão de Crédito</option> <option value="Cartão de Débito">Cartão de Débito</option> <option value="PIX">PIX</option> <option value="Boleto">Boleto</option> <option value="Transferência">Transferência</option> </select></div>
-          <div><label for="status" class="block text-sm font-medium text-slate-300 dark:text-slate-300 light:text-slate-600 mb-1">Status</label> <select id="status" name="status" required class="w-full p-2 bg-slate-700 dark:bg-slate-700 light:bg-white border border-slate-600 dark:border-slate-600 light:border-slate-300 rounded-lg text-white dark:text-white light:text-slate-800 focus:border-blue-500 focus:outline-none"> <option value="">Selecione...</option> <option value="Pendente">Pendente</option> <option value="Processando">Processando</option> <option value="Pago">Pago</option> <option value="Entregue">Entregue</option> <option value="Finalizado">Finalizado</option> <option value="Cancelado">Cancelado</option> </select></div>
-        </div>
-        <div class="flex gap-3 mt-6">
-          <button type="submit" id="save-btn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium transition-colors"> <span id="save-text">Salvar Pedido</span> <span id="save-loading" class="hidden">Salvando...</span> </button> 
-          <button type="button" id="cancel-modal-btn" class="px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg font-medium transition-colors"> Cancelar </button>
-        </div>
-      </form>
-    </div>
-  </div>
-  
-  <div id="notification-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
-  
-  <script src="script.js"></script>
-  
+    <div id="notification-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
+    
+    <script src="app.js"></script>
 </body>
 </html>

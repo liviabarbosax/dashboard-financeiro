@@ -1,0 +1,135 @@
+/* Estilos customizados para o Dashboard Financeiro */
+
+body {
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+}
+
+/* Estilos da Sidebar */
+.sidebar-item {
+    transition: all 0.2s ease;
+}
+
+.sidebar-item:hover {
+    background-color: rgba(59, 130, 246, 0.1);
+    border-left: 3px solid #3B82F6;
+}
+
+.sidebar-item.active {
+    background-color: rgba(59, 130, 246, 0.2);
+    border-left: 3px solid #3B82F6;
+    color: #3B82F6;
+}
+
+/* Estilos Padrão para Cards (Dark Default) */
+.card {
+    background: linear-gradient(135deg, #334155 0%, #475569 100%);
+    border: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.metric-card {
+    background: linear-gradient(135deg, #1E293B 0%, #334155 100%);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+/* Dark mode overrides (Garante que os fundos mais escuros persistem) */
+.dark .card {
+    background: linear-gradient(135deg, #1E293B 0%, #334155 100%);
+}
+
+.dark .metric-card {
+    background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+}
+
+/* Light mode styles */
+.light .card {
+    background: linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 100%);
+    border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+.light .metric-card {
+    background: linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 100%);
+    border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+/* Transições e Animações */
+* {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Animação de Loading */
+.loading-spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Animação de Pulse para Botões de Exportação */
+.export-pulse {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+/* Estilos da Tela de Login */
+.login-container {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+}
+
+.login-card {
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Estilos do Toggle de Tema */
+.theme-toggle {
+    position: relative;
+    width: 60px;
+    height: 30px;
+    background: #374151;
+    border-radius: 15px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.theme-toggle.active {
+    background: #3B82F6;
+}
+
+.theme-toggle-slider {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 24px;
+    height: 24px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.theme-toggle.active .theme-toggle-slider {
+    transform: translateX(30px);
+}
+
+/* Responsividade de Tabela (Media Query) */
+@media (max-width: 768px) {
+    .table-responsive {
+        font-size: 0.75rem;
+    }
+    
+    .table-responsive th,
+    .table-responsive td {
+        padding: 0.5rem 0.25rem;
+    }
+}
