@@ -6,8 +6,7 @@
     <title>Dashboard Financeiro Avançado</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="/_sdk/element_sdk.js"></script>
-    <script src="/_sdk/data_sdk.js"></script>
+    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -18,39 +17,45 @@
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
     <link rel="stylesheet" href="estilo.css">
-    
-    <style>@view-transition { navigation: auto; }</style>
 </head>
 <body class="h-full bg-slate-800 text-white dark">
-  <div id="login-screen" class="login-screen flex items-center justify-center min-h-screen bg-gray-900 hidden">
-    <form id="login-form" class="p-8 bg-gray-800 rounded-lg shadow-xl w-full max-w-sm">
-        <h2 class="text-3xl font-bold text-white mb-6 text-center">Login</h2>
 
-        <div class="mb-4">
-            <label for="login-email" class="block text-sm font-medium text-gray-300 mb-1">Email</label>
-            <input type="email" id="login-email" name="email" required
-                class="w-full px-4 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                placeholder="seu.email@dominio.com" value="domunistore@example.com"> 
+    <div id="initial-loader" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900">
+        <div class="flex flex-col items-center">
+            <div class="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+            <p class="mt-4 text-slate-400 text-sm">Carregando sistema...</p>
+        </div>
+    </div>
+
+    <div id="login-screen" class="hidden flex items-center justify-center min-h-screen bg-gray-900">
+        <form id="login-form" class="p-8 bg-gray-800 rounded-lg shadow-xl w-full max-w-sm">
+            <h2 class="text-3xl font-bold text-white mb-6 text-center">Login</h2>
+
+            <div class="mb-4">
+                <label for="login-email" class="block text-sm font-medium text-gray-300 mb-1">Email</label>
+                <input type="email" id="login-email" name="email" required
+                    class="w-full px-4 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    placeholder="seu.email@dominio.com"> 
             </div>
 
-        <div class="mb-6">
-            <label for="login-password" class="block text-sm font-medium text-gray-300 mb-1">Senha</label>
-            <input type="password" id="login-password" name="password" required
-                class="w-full px-4 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                placeholder="Sua senha">
-        </div>
+            <div class="mb-6">
+                <label for="login-password" class="block text-sm font-medium text-gray-300 mb-1">Senha</label>
+                <input type="password" id="login-password" name="password" required
+                    class="w-full px-4 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    placeholder="Sua senha">
+            </div>
 
-        <button type="submit" id="login-btn"
-            class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 rounded-lg transition duration-200">
-            Entrar
-        </button>
+            <button type="submit" id="login-btn"
+                class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 rounded-lg transition duration-200 flex justify-center items-center">
+                <span id="login-text">Entrar</span>
+                <div id="login-loading" class="hidden w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            </button>
 
-        <p id="login-message" class="text-red-400 text-sm mt-4 text-center hidden"></p>
-    </form>
-</div>
+            <p id="login-message" class="text-red-400 text-sm mt-4 text-center hidden"></p>
+        </form>
     </div>
     
-    <div id="main-app" class="flex h-full hidden">
+    <div id="main-app" class="hidden h-full flex">
         <div class="w-64 bg-slate-900 dark:bg-slate-900 light:bg-white light:text-slate-800 shadow-xl flex flex-col">
             <div class="p-6 border-b border-slate-700 dark:border-slate-700 light:border-slate-200">
                 <h1 id="app-title" class="text-xl font-bold text-blue-400">Dashboard Financeiro</h1>
@@ -83,8 +88,9 @@
                 </button>
             </div>
         </div>
-        <div class="flex-1 flex flex-col">
-            <header class="bg-slate-900 dark:bg-slate-900 light:bg-white light:text-slate-800 shadow-lg p-4 border-b border-slate-700 dark:border-slate-700 light:border-slate-200">
+
+        <div class="flex-1 flex flex-col h-full overflow-hidden">
+            <header class="bg-slate-900 dark:bg-slate-900 light:bg-white light:text-slate-800 shadow-lg p-4 border-b border-slate-700 dark:border-slate-700 light:border-slate-200 shrink-0">
                 <div class="flex justify-between items-center">
                     <div>
                         <h2 id="page-title" class="text-2xl font-semibold text-white dark:text-white light:text-slate-800">Dashboard</h2>
@@ -100,11 +106,12 @@
                         </div>
                         <div class="text-right">
                             <p class="text-sm text-slate-400 dark:text-slate-400 light:text-slate-600">Total de Caixa</p>
-                            <p id="total-cash" class="text-2xl font-bold text-green-400">R$ 15.750,00</p>
+                            <p id="total-cash" class="text-2xl font-bold text-green-400">R$ 0,00</p>
                         </div>
                     </div>
                 </div>
             </header>
+
             <main class="flex-1 p-6 overflow-auto bg-slate-800 dark:bg-slate-800 light:bg-slate-50">
                 <div id="dashboard-page" class="page-content">
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
@@ -113,7 +120,6 @@
                                 <div>
                                     <p class="text-green-100 text-sm font-medium">💰 Lucro Total</p>
                                     <p id="kpi-lucro-total" class="text-3xl font-bold text-white mt-2">R$ 0,00</p>
-                                    <p id="kpi-lucro-variacao" class="text-green-200 text-xs mt-1">+0% vs mês anterior</p>
                                 </div>
                                 <div class="bg-white/20 p-3 rounded-full">
                                     <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path></svg>
@@ -125,7 +131,6 @@
                                 <div>
                                     <p class="text-blue-100 text-sm font-medium">🛒 Total Vendas</p>
                                     <p id="kpi-total-vendas" class="text-3xl font-bold text-white mt-2">R$ 0,00</p>
-                                    <p id="kpi-vendas-variacao" class="text-blue-200 text-xs mt-1">+0% vs mês anterior</p>
                                 </div>
                                 <div class="bg-white/20 p-3 rounded-full">
                                     <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
@@ -137,7 +142,6 @@
                                 <div>
                                     <p class="text-purple-100 text-sm font-medium">📦 Total Pedidos</p>
                                     <p id="kpi-total-pedidos" class="text-3xl font-bold text-white mt-2">0</p>
-                                    <p id="kpi-pedidos-variacao" class="text-purple-200 text-xs mt-1">+0% vs mês anterior</p>
                                 </div>
                                 <div class="bg-white/20 p-3 rounded-full">
                                     <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
@@ -149,7 +153,6 @@
                                 <div>
                                     <p class="text-orange-100 text-sm font-medium">📈 Ticket Médio</p>
                                     <p id="kpi-ticket-medio" class="text-3xl font-bold text-white mt-2">R$ 0,00</p>
-                                    <p id="kpi-ticket-variacao" class="text-orange-200 text-xs mt-1">+0% vs mês anterior</p>
                                 </div>
                                 <div class="bg-white/20 p-3 rounded-full">
                                     <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
@@ -161,7 +164,6 @@
                                 <div>
                                     <p class="text-teal-100 text-sm font-medium">📊 Margem Lucro</p>
                                     <p id="kpi-margem-lucro" class="text-3xl font-bold text-white mt-2">0%</p>
-                                    <p id="kpi-margem-variacao" class="text-teal-200 text-xs mt-1">+0% vs mês anterior</p>
                                 </div>
                                 <div class="bg-white/20 p-3 rounded-full">
                                     <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
@@ -169,6 +171,7 @@
                             </div>
                         </div>
                     </div>
+
                     <div class="card p-6 rounded-2xl mb-8 border border-slate-600/50">
                         <div class="flex justify-between items-center mb-6">
                             <h3 class="text-xl font-semibold text-white dark:text-white light:text-slate-800">🎯 Painel de Metas</h3>
@@ -223,6 +226,7 @@
                             </div>
                         </div>
                     </div>
+
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
                         <div class="card p-6 rounded-2xl border border-slate-600/50">
                             <h3 class="text-lg font-semibold text-white dark:text-white light:text-slate-800 mb-4">📈 Lucro por Mês</h3>
@@ -257,9 +261,10 @@
                             <span class="text-slate-400 dark:text-slate-400 light:text-slate-600 text-sm">Últimos 5 pedidos</span>
                         </div>
                         <div id="atividade-recente-container" class="space-y-3">
-                            </div>
+                        </div>
                     </div>
                 </div>
+
                 <div id="pedidos-page" class="page-content hidden">
                     <div class="card p-6 rounded-xl">
                         <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
@@ -312,11 +317,12 @@
                                     </tr>
                                 </thead>
                                 <tbody id="pedidos-tbody">
-                                    </tbody>
-                            </table >
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
+
                 <div id="resumo-page" class="page-content hidden">
                     <div class="card p-6 rounded-xl mb-6">
                         <h3 class="text-xl font-semibold text-white dark:text-white light:text-slate-800 mb-4">Filtros de Análise</h3>
@@ -395,10 +401,11 @@
                         <div class="card p-6 rounded-xl">
                             <h3 class="text-xl font-semibold text-white dark:text-white light:text-slate-800 mb-4">Métodos de Pagamento</h3>
                             <div id="metodos-pagamento-container" class="space-y-3">
-                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
+
                 <div id="fechamento-page" class="page-content hidden">
                     <div class="card p-6 rounded-xl mb-6">
                         <h3 class="text-xl font-semibold text-white dark:text-white light:text-slate-800 mb-4">Configuração do Mês</h3>
@@ -492,6 +499,7 @@
             </main>
         </div>
     </div>
+
     <div id="pedido-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
         <div class="bg-slate-800 dark:bg-slate-800 light:bg-white p-6 rounded-xl w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4">
@@ -527,8 +535,9 @@
             </form>
         </div>
     </div>
-    <div id="notification-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
-    
+
+    <div id="notification-container" class="fixed top-4 right-4 z-[200] space-y-2"></div>
+
     <script src="app.js"></script>
 </body>
 </html>
